@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title></title>
+    <style>
+      /* Add your CSS styles here */
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f2f2f2;
+      }
+      img {
+        max-width: 150px;
+      }
+      .calculator {
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 30px;
+        background-color: #fff;
+        border-radius: 15px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      }
+      label {
+        display: flex;
+        margin-bottom: 10px;
+      }
+      select,
+      input[type='text'] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      button {
+        background-color: #007bff;
+        color: #fff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      #result {
+        margin-top: 15px;
+        font-weight: bold;
+      }
+      #submitBtn {
+        display: none;
+        background-color: #00ff33;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="calculator">
+      <img src="assets/logoBSI.png" />
+      <h2>
+        Simulasi Pembiayaan <br />
+        Mitraguna Berkah BSI
+      </h1>
+      <form id="loanForm" action="https://script.google.com/macros/s/AKfycbwAlIwBOlLX2aVXZpXOV4BG7avMcer0RF18GIzGP5Kc3zpw5D1-tq9bz7B5W-qjH37DQg/exec" method="post">
+        <label for="userId">Nomor KTP:</label>
+        <input type="text" name="ID" id="userId" required />
+
+        <label for="monthlyIncome">Penghasilan bulanan (Rp.):</label>
+        <input type="text" name="Pendapatan" id="monthlyIncome" required />
+
+        <label for="loanAmount">Plafon (Jumlah pembiayaan):</label>
+        <input type="text" name="Plafon" id="loanAmount" required />
+
+        <label for="numPayments">Tenor (bulan):</label>
+        <input type="text" name="Tenor" id="numPayments" required />
+
+        <label for="priceSelection">Price</label>
+        <select id="priceSelection" name="Price">
+          <option value="regular">Regular</option>
+          <option value="promo">Promo</option>
+        </select>
+
+        <button type="button" onclick="calculateLoan()">Simulasikan!</button>
+      <div id="result"></div>
+        <button type="submit" id="submitBtn">Submit form</button>
+      </div>
+      </form>
+
+    
+
+    <script>
+      function calculateLoan() {
+        // Retrieve user inputs
+        const userId = document.getElementById('userId').value
+        const monthlyIncome = parseFloat(
+          document.getElementById('monthlyIncome').value
+        )
+        const loanAmount = parseFloat(
+          document.getElementById('loanAmount').value
+        )
+        const numPayments = parseInt(
+          document.getElementById('numPayments').value
+        )
+        const priceSelection = document.getElementById('priceSelection').value
+
+        const PMT = (rate, nper, pv, fv, type) => {
+          /*
+           * rate   - interest rate per month
+           * nper   - number of periods (months)
+           * pv   - present value
+           * fv   - future value
+           * type - when the payments are due:
+           *        0: end of the period, e.g. end of month (default)
+           *        1: beginning of period
+           */
+          let PMT, pvif
+
+          fv || (fv = 0)
+          type || (type = 0)
+
+          if (rate === 0) return -(pv + fv) / nper
+
+          pvif = Math.pow(1 + rate, nper)
+          PMT = (-rate * (pv * pvif + fv)) / (pvif - 1)
+
+          if (type === 1) PMT /= 1 + rate
+          return PMT*(-1)
+        }
+
+        // Calculate monthly payment based on loan amount, number of payments, and price selection
+        let monthlyPayment = 0
+        if (priceSelection === 'regular') {
+          monthlyPayment = PMT(0.105 / 12, numPayments, loanAmount, 0, 0)
+        } else if (priceSelection === 'promo') {
+          monthlyPayment = PMT(0.095 / 12, numPayments, loanAmount, 0, 0)
+        }
+
+        // Check if the loan is accepted based on income and monthly payment
+        const isLoanAccepted = monthlyPayment <= 0.6 * monthlyIncome
+
+        // Display the result
+        const resultElement = document.getElementById('result')
+        if (isLoanAccepted) {
+          resultElement.innerHTML = `Pembiayaan dapat diterima dengan biaya bulanan sebesar: Rp. ${monthlyPayment.toFixed(
+            2
+          )}`
+        } else {
+          resultElement.innerHTML = `Mohon maaf pembiayaan anda kemungkinan belum bisa diterima. Pembiayan bulanan anda sebesar: Rp. ${monthlyPayment.toFixed(
+            2
+          )} yang melebihi dari 60% penghasilan bulanan Anda`
+        }
+        // Show the second button after calculation
+        const submitBtn = document.getElementById('submitBtn')
+        submitBtn.style.display = 'block'
+      }
+    </script>
+  </body>
+</html>
